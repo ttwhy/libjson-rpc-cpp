@@ -5,7 +5,7 @@ services:
   - docker
 before_install:
   - |
-   if [ "$OS" == "native" ];
+   if [ "$OS" == "native" && "$TRAVIS_OS_NAME" != "osx" ];
    then
     sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
     sudo apt-get update -qq
@@ -45,15 +45,6 @@ matrix:
     - env: OS=native
       os: osx
 script:
-    - |
-      if [ "$OS" == "native" ]
-      then
-        sudo ./docker/build_test_install.sh;
-        if [ "$TRAVIS_OS_NAME" == "linux" ]
-        then
-          ./dev/codecov.sh; bash <(curl -s
-        fi
-      else
-        cd docker
-        make ${OS}
-      fi
+    - if [[ "$OS" == "native" ]]; then sudo ./docker/build_test_install.sh; fi
+    - if [[ "$OS" == "native" && "$TRAVIS_OS_NAME" == "linux"]]; then ./dev/codecov.sh; bash <(curl -s https://codecov.io/bash); fi
+    - if [[ "$OS" != "native" ]]; then cd docker; make ${OS}; fi

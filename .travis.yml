@@ -26,10 +26,6 @@ before_install:
     brew install cmake jsoncpp argtable libmicrohttpd curl
    fi
 
-os:
-  - linux
-  - osx
-
 matrix:
   include:
     - env: OS=fedora
@@ -54,6 +50,7 @@ script:
       then
         sudo ./docker/build_test_install.sh;
         if [ "$TRAVIS_OS_NAME" == "linux" ]
+        then
           ./dev/codecov.sh; bash <(curl -s
         fi
       else

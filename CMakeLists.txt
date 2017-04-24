@@ -24,12 +24,12 @@ if (NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
 endif()
 
 # defaults for modules that can be enabled/disabled
-if(UNIX)
+if(LINUX)
     set(UNIX_DOMAIN_SOCKET_SERVER YES CACHE BOOL "Include Unix Domain Socket server")
     set(UNIX_DOMAIN_SOCKET_CLIENT YES CACHE BOOL "Include Unix Domain Socket client")
     set(FILE_DESCRIPTOR_SERVER YES CACHE BOOL "Include File Descriptor server")
     set(FILE_DESCRIPTOR_CLIENT YES CACHE BOOL "Include File Descriptor client")
-endif(UNIX)
+endif()
 
 set(TCP_SOCKET_SERVER NO CACHE BOOL "Include Tcp Socket server")
 set(TCP_SOCKET_CLIENT NO CACHE BOOL "Include Tcp Socket client")

@@ -19,9 +19,7 @@ using namespace jsonrpc;
 using namespace std;
 
 #define BUFFER_SIZE 1024
-#ifndef DELIMITER_CHAR
-#define DELIMITER_CHAR char(0x0A)
-#endif
+#define FD_DELIMITER_CHAR char(0x04)
 #define READ_TIMEOUT 0.2 // Set timeout in seconds
 
 FileDescriptorServer::FileDescriptorServer(int inputfd, int outputfd) :
@@ -60,22 +58,20 @@ void FileDescriptorServer::Wait() const {
 bool FileDescriptorServer::SendResponse(const string& response, void* addInfo)
 {
     (void)addInfo; // Suppress warning
-    string toSend = response;
-    // If the DELIMITER_CHAR was not append, do it now
-    if (toSend.find(DELIMITER_CHAR) == string::npos)
-        toSend.append(1, DELIMITER_CHAR);
-
-    if (DELIMITER_CHAR != '\n')
-        toSend = toSend.substr(0, toSend.find_last_of('\n')) + DELIMITER_CHAR;
+    const char* toSend = response.c_str();
 
     ssize_t result = 0;
-    ssize_t nbytes = toSend.size();
+    ssize_t nbytes = response.size();
     do
     {
-        result = write(outputfd, &(toSend.c_str()[toSend.size() - nbytes]), toSend.size() - result);
+        result = write(outputfd, toSend, nbytes);
         nbytes -= result;
-    } while (result && nbytes); // While we are still writing and there is still to write
-    return result != 0;
+        toSend += result;
+    } while (result > 0 && nbytes > 0); // While we are still writing and there is still to write
+
+    char delim = FD_DELIMITER_CHAR;
+    write(outputfd, &delim, 1);
+    return nbytes == 0;
 }
 
 void* FileDescriptorServer::LaunchLoop(void *p_data)
@@ -108,9 +104,10 @@ void FileDescriptorServer::ListenLoop()
                     break;
                 }
             }
-        } while (this->running && request.find(DELIMITER_CHAR) == string::npos);
+        } while (this->running && request.find(FD_DELIMITER_CHAR) == string::npos);
         if (this->running) {
             // False if either the input fd was closed or someone interrupted us with ::StopListening.
+            request.pop_back();
             this->OnRequest(request, NULL);
         }
     }

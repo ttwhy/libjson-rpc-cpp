@@ -27,6 +27,9 @@ namespace jsonrpc
       int outputfd;
 
       bool IsReadable(int fd);
+
+      bool writeMessage(const std::string &message);
+      bool readMessage(std::string &message);
   };
 
 } /* namespace jsonrpc */

@@ -20,11 +20,9 @@
 using namespace jsonrpc;
 using namespace std;
 
-#ifndef DELIMITER_CHAR
-    #define DELIMITER_CHAR char(0x0A)
-#endif
 
 #define TEST_MODULE "[connector_filedescriptor]"
+
 
 namespace testfiledescriptorserver
 {
@@ -70,20 +68,17 @@ TEST_CASE_METHOD(F, "test_filedescriptor_success", TEST_MODULE)
     handler.timeout = 100;
     string result;
     string request = "examplerequest";
-    request.push_back(DELIMITER_CHAR);
     string expectedResult = "exampleresponse";
-    expectedResult.push_back(DELIMITER_CHAR);
-
     client->SendRPCMessage(request, result);
-
     CHECK(handler.request == request);
     CHECK(result == expectedResult);
 }
 
+
 TEST_CASE_METHOD(F, "test_filedescriptor_longpost", TEST_MODULE)
 {
     int mb = 1;
-    unsigned long size = mb * 100;
+    unsigned long size = mb * 1023;
     char* str = (char*) malloc(size * sizeof(char));
     if (str == NULL)
     {
@@ -93,36 +88,19 @@ TEST_CASE_METHOD(F, "test_filedescriptor_longpost", TEST_MODULE)
     {
         str[i] = (char)('a'+(i%26));
     }
-    str[size-1] = '\n';
+    str[size-1] = '\0';
 
     handler.response = str;
     string response;
     client->SendRPCMessage(str, response);
 
+    CHECK(handler.request.size() == strlen(str));
     CHECK(handler.request == str);
     CHECK(response == handler.response);
-    CHECK(response.size() == size);
+    CHECK(response.size() == strlen(str));
 
     free(str);
-
     server->StopListening();
-}
-
-TEST_CASE_METHOD(F, "test_filedescriptor_success_with_delimiter", TEST_MODULE)
-{
-    handler.response = "exampleresponse";
-    handler.response.push_back(DELIMITER_CHAR);
-    handler.timeout = 100;
-    string result;
-    string request = "examplerequest";
-    request.push_back(DELIMITER_CHAR);
-    string expectedResult = "exampleresponse";
-    expectedResult.push_back(DELIMITER_CHAR);
-
-    client->SendRPCMessage(request, result);
-
-    CHECK(handler.request == request);
-    CHECK(result == expectedResult);
 }
 
 TEST_CASE("test_filedescriptor_server_multiplestart", TEST_MODULE)

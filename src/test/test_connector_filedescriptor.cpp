@@ -82,8 +82,8 @@ TEST_CASE_METHOD(F, "test_filedescriptor_success", TEST_MODULE)
 
 TEST_CASE_METHOD(F, "test_filedescriptor_longpost", TEST_MODULE)
 {
-    int mb = 2;
-    unsigned long size = mb * 1024*1024;
+    int mb = 1;
+    unsigned long size = mb * 512;
     char* str = (char*) malloc(size * sizeof(char));
     if (str == NULL)
     {

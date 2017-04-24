@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(libjson-rpc-cpp)
 
-# list command no longer ignores empty elements 
+# list command no longer ignores empty elements
 cmake_policy(SET CMP0007 NEW)
 cmake_policy(SET CMP0012 NEW)
 
@@ -24,7 +24,7 @@ if (NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
 endif()
 
 # defaults for modules that can be enabled/disabled
-if(LINUX)
+if(UNIX)
     set(UNIX_DOMAIN_SOCKET_SERVER YES CACHE BOOL "Include Unix Domain Socket server")
     set(UNIX_DOMAIN_SOCKET_CLIENT YES CACHE BOOL "Include Unix Domain Socket client")
     set(FILE_DESCRIPTOR_SERVER YES CACHE BOOL "Include File Descriptor server")

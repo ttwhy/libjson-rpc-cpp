@@ -18,10 +18,6 @@
 using namespace jsonrpc;
 using namespace std;
 
-#ifndef DELIMITER_CHAR
-    #define DELIMITER_CHAR char(0x0A)
-#endif
-
 #define TEST_MODULE "[connector_unixdomainsocket]"
 
 #define SOCKET_PATH "/tmp/jsonrpccpp-socket"
@@ -37,6 +33,7 @@ namespace testunixdomainsocketserver
                 server(SOCKET_PATH),
                 client(SOCKET_PATH)
             {
+                unlink(SOCKET_PATH);
                 server.SetHandler(&handler);
                 REQUIRE(server.StartListening());
             }
@@ -60,14 +57,40 @@ TEST_CASE_METHOD(F, "test_unixdomainsocket_success", TEST_MODULE)
     handler.timeout = 100;
     string result;
     string request = "examplerequest";
-    request.push_back(DELIMITER_CHAR);
     string expectedResult = "exampleresponse";
-    expectedResult.push_back(DELIMITER_CHAR);
 
     client.SendRPCMessage(request, result);
 
     CHECK(handler.request == request);
     CHECK(result == expectedResult);
+}
+
+TEST_CASE_METHOD(F, "test_unixdomainsocket_long_post", TEST_MODULE)
+{
+    int mb = 2;
+    unsigned long size = mb * 1023 * 1022;
+    char* str = (char*) malloc(size * sizeof(char));
+    if (str == NULL)
+    {
+        FAIL("Could not allocate enough memory for test");
+    }
+    for (unsigned long i=0; i < size; i++)
+    {
+        str[i] = (char)('a'+(i%26));
+    }
+    str[size-1] = '\0';
+
+    handler.response = str;
+    string response;
+    client.SendRPCMessage(str, response);
+
+    CHECK(handler.request.size() == strlen(str));
+    CHECK(handler.request == str);
+    CHECK(response == handler.response);
+    CHECK(response.size() == strlen(str));
+
+    free(str);
+    server.StopListening();
 }
 
 

@@ -25,9 +25,7 @@ using namespace std;
 #ifndef PATH_MAX
 #define PATH_MAX 108
 #endif
-#ifndef DELIMITER_CHAR
-#define DELIMITER_CHAR char(0x0A)
-#endif
+#define UD_DELIMITER_CHAR char(0x04)
 
 UnixDomainSocketServer::UnixDomainSocketServer(const string &socket_path) :
     running(false),
@@ -108,23 +106,7 @@ bool UnixDomainSocketServer::SendResponse(const string& response, void* addInfo)
 {
     bool result = false;
     int connection_fd = reinterpret_cast<intptr_t>(addInfo);
-
-    string temp = response;
-    if(temp.find(DELIMITER_CHAR) == string::npos)
-    {
-        temp.append(1, DELIMITER_CHAR);
-    }
-    if(DELIMITER_CHAR != '\n')
-    {
-        char eot = DELIMITER_CHAR;
-        string toSend = temp.substr(0, toSend.find_last_of('\n'));
-        toSend += eot;
-        result = this->WriteToSocket(connection_fd, toSend);
-    }
-    else
-    {
-        result = this->WriteToSocket(connection_fd, temp);
-    }
+    result = this->WriteToSocket(connection_fd, response);
     close(connection_fd);
     return result;
 }
@@ -179,8 +161,8 @@ void* UnixDomainSocketServer::GenerateResponse(void *p_data)
     { //The client sends its json formatted request and a delimiter request.
         nbytes = read(connection_fd, buffer, BUFFER_SIZE);
         request.append(buffer,nbytes);
-    } while(request.find(DELIMITER_CHAR) == string::npos);
-
+    } while(request.find(UD_DELIMITER_CHAR) == string::npos);
+    request.pop_back();
     instance->OnRequest(request, reinterpret_cast<void*>(connection_fd));
     return NULL;
 }
@@ -188,22 +170,19 @@ void* UnixDomainSocketServer::GenerateResponse(void *p_data)
 
 bool UnixDomainSocketServer::WriteToSocket(int fd, const string& toWrite)
 {
-    bool fullyWritten = false;
-    bool errorOccured = false;
-    string toSend = toWrite;
+    const char* data = toWrite.c_str();
+    ssize_t bytesToWrite = toWrite.size();
+    ssize_t byteWritten = 0;
     do
     {
-        ssize_t byteWritten = write(fd, toSend.c_str(), toSend.size());
-        if(byteWritten < 0)
-            errorOccured = true;
-        else if(byteWritten < static_cast<ssize_t>(toSend.size()))
+        byteWritten = write(fd, data, bytesToWrite);
+        if(byteWritten > 0)
         {
-            int len = toSend.size() - byteWritten;
-            toSend = toSend.substr(byteWritten + sizeof(char), len);
+            bytesToWrite -= byteWritten;
+            data += byteWritten;
         }
-        else
-            fullyWritten = true;
-    } while(!fullyWritten && !errorOccured);
-
-    return fullyWritten && !errorOccured;
+    } while(bytesToWrite > 0 && byteWritten > 0);
+    char delim = UD_DELIMITER_CHAR;
+    write(fd,&delim,1);
+    return bytesToWrite == 0;
 }

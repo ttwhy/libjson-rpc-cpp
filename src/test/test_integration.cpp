@@ -101,6 +101,7 @@ TEST_CASE("test_integration_http", TEST_MODULE)
 
 TEST_CASE("test_integration_unixdomain", TEST_MODULE)
 {
+    unlink(TEST_PATH);
     UnixDomainSocketServer sconn(TEST_PATH);
     UnixDomainSocketClient cconn(TEST_PATH);
 

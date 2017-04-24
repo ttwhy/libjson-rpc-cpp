@@ -22,9 +22,7 @@
 #ifndef PATH_MAX
 #define PATH_MAX 108
 #endif
-#ifndef DELIMITER_CHAR
-#define DELIMITER_CHAR char(0x0A)
-#endif
+#define UD_DELIMITER_CHAR char(0x04)
 
 using namespace jsonrpc;
 using namespace std;
@@ -58,28 +56,22 @@ void UnixDomainSocketClient::SendRPCMessage(const std::string& message, std::str
         throw JsonRpcException(Errors::ERROR_CLIENT_CONNECTOR, "Could not connect to: " + this->path);
     }
 
-    bool fullyWritten = false;
-    string toSend = message;
+    const char* toSend = message.c_str();
+    ssize_t bytesToWrite = message.size();
     do
     {
-        ssize_t byteWritten = write(socket_fd, toSend.c_str(), toSend.size());
-        if(static_cast<size_t>(byteWritten) < toSend.size())
-        {
-            int len = toSend.size() - byteWritten;
-            toSend = toSend.substr(byteWritten + sizeof(char), len);
-        }
-        else
-            fullyWritten = true;
-    } while(!fullyWritten);
+        ssize_t byteWritten = write(socket_fd, toSend, bytesToWrite);
+        bytesToWrite -= byteWritten;
+        toSend += byteWritten;
+    } while(bytesToWrite > 0);
+    char delim = UD_DELIMITER_CHAR;
+    write(socket_fd, &delim, 1);
 
     do
     {
         nbytes = read(socket_fd, buffer, BUFFER_SIZE);
-        string tmp;
-        tmp.append(buffer, nbytes);
         result.append(buffer,nbytes);
-
-    } while(result.find(DELIMITER_CHAR) == string::npos);
-
+    } while(result.find(UD_DELIMITER_CHAR) == string::npos);
+    result.pop_back();
     close(socket_fd);
 }

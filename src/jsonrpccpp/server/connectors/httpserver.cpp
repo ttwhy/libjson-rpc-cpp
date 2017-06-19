@@ -55,11 +55,11 @@ bool HttpServer::StartListening()
         const bool has_poll = (MHD_is_feature_supported(MHD_FEATURE_POLL) == MHD_YES);
         unsigned int mhd_flags;
         if (has_epoll)
-            mhd_flags = MHD_USE_EPOLL_INTERNAL_THREAD;
+            mhd_flags = MHD_USE_EPOLL_INTERNALLY;
         else if (has_poll)
-            mhd_flags = MHD_USE_POLL_INTERNAL_THREAD;
+            mhd_flags = MHD_USE_POLL_INTERNALLY;
         else
-            mhd_flags = MHD_USE_SELECT_INTERNAL_THREAD;
+            mhd_flags = MHD_USE_SELECT_INTERNALLY;
         if (this->path_sslcert != "" && this->path_sslkey != "")
         {
             try {

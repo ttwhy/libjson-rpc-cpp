@@ -18,7 +18,7 @@ TestHttpServer::TestHttpServer(int port) :
 
 bool TestHttpServer::StartListening()
 {
-    this->daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNAL_THREAD, this->port, NULL, NULL, TestHttpServer::callback, this, MHD_OPTION_END);
+    this->daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, this->port, NULL, NULL, TestHttpServer::callback, this, MHD_OPTION_END);
     return (this->daemon != NULL);
 }
 
